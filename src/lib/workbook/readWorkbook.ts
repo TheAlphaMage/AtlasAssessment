@@ -30,7 +30,8 @@ export interface RawWorkbook {
 }
 
 export function workbookPath(): string {
-  return process.env.WORKBOOK_PATH || path.join(process.cwd(), DEFAULT_WORKBOOK_FILE);
+  // The workbook is read at runtime from the working directory; it is not a build input.
+  return process.env.WORKBOOK_PATH || path.join(/*turbopackIgnore: true*/ process.cwd(), DEFAULT_WORKBOOK_FILE);
 }
 
 export async function readWorkbook(file: string): Promise<{ raw: RawWorkbook; issues: ValidationIssue[] }> {

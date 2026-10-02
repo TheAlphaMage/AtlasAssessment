@@ -3,7 +3,7 @@
  * sent to a model, and the deterministic (no-AI) summary for each topic.
  * Every number here is read from the computed PlanResult and only formatted.
  */
-import { REASON_STATION_CAPACITY, SEGMENTS, TONNE_STEP } from "../domain/constants";
+import { REASON_STATION_CAPACITY, SEGMENTS } from "../domain/constants";
 import type { PlanResult } from "../domain/types";
 import { fmtEur, fmtPct, fmtSignedT, fmtT } from "../format";
 
@@ -188,9 +188,8 @@ function localAnswer(r: PlanResult): DeterministicAnswer {
   if (kpis.localT === 0) {
     return { answer: `No fruit goes to the local market today: all ${fmtT(kpis.actualT)} received are exported.`, evidenceIds: [] };
   }
-  const stationFull = kpis.stationCapacityT - kpis.exportT < TONNE_STEP;
   const blocked = r.clients.filter((c) => c.shortageReason === REASON_STATION_CAPACITY);
-  const why = stationFull
+  const why = kpis.stationFull
     ? `The station's export capacity of ${fmtT(kpis.stationCapacityT)} is fully used, while ${fmtT(kpis.actualT)} arrived.`
     : "No remaining client order accepts this fruit, although the station still had spare capacity.";
   const lines = [

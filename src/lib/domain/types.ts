@@ -134,6 +134,8 @@ export interface Kpis {
   exportT: number;
   exportRate: number;
   stationUtilization: number;
+  /** True when less than one 5 t step of export capacity is left. */
+  stationFull: boolean;
   localT: number;
   localMarketRatio: number;
   exportRevenueEur: number;

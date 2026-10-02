@@ -230,6 +230,7 @@ function buildKpis(
     exportT: exported,
     exportRate: actual > 0 ? exported / actual : 0,
     stationUtilization: exported / station.capacityT,
+    stationFull: station.capacityT - exported < TONNE_STEP,
     localT: local,
     localMarketRatio: station.localMarketRatio,
     exportRevenueEur: exportRevenue,

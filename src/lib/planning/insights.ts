@@ -2,7 +2,7 @@
  * Explains the computed plan: links farm/segment gaps to client shortages and the
  * station limit to the local residual. Reads engine output only; adds no new policy.
  */
-import { REASON_INSUFFICIENT_SEGMENT, REASON_STATION_CAPACITY, SEGMENTS, TONNE_STEP } from "../domain/constants";
+import { REASON_INSUFFICIENT_SEGMENT, REASON_STATION_CAPACITY, SEGMENTS } from "../domain/constants";
 import type { ClientResult, GapImpact, PlanCore, PlanException } from "../domain/types";
 import { fmtEur, fmtPct, fmtSignedT, fmtT } from "../format";
 
@@ -41,7 +41,7 @@ export function buildExceptions(plan: PlanCore, gaps: GapImpact[]): PlanExceptio
   const { kpis } = plan;
   const exceptions: PlanException[] = plan.clients.filter((c) => c.atRisk).map((c) => clientException(plan, c));
 
-  if (kpis.stationCapacityT - kpis.exportT < TONNE_STEP) {
+  if (kpis.stationFull) {
     const blocked = plan.clients.filter((c) => c.shortageReason === REASON_STATION_CAPACITY);
     exceptions.push({
       kind: "STATION_FULL",
