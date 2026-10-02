@@ -1,0 +1,164 @@
+/* Shared look for the loading, validation-error and server-error screens. */
+
+.panel {
+  display: grid;
+  gap: var(--space-4);
+  max-width: 880px;
+  margin: var(--space-6) auto;
+  padding: var(--space-6);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-lg);
+  background: var(--color-card);
+  box-shadow: var(--shadow-card);
+}
+
+.error {
+  border-color: var(--color-risk-line);
+}
+
+.heading {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  font-size: var(--text-xl);
+}
+
+.errorIcon {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  background: var(--color-risk-soft);
+  color: var(--color-risk);
+}
+
+.lead {
+  color: var(--color-ink-soft);
+}
+
+.muted {
+  color: var(--color-ink-faint);
+  font-size: var(--text-sm);
+}
+
+/* Loading steps: Load -> Validate -> Plan */
+.steps {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin: var(--space-3) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.step {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--color-ink-faint);
+  font-weight: 600;
+}
+
+.step + .step::before {
+  content: "";
+  width: 2.5rem;
+  height: 2px;
+  margin-right: var(--space-2);
+  background: var(--color-line-strong);
+}
+
+.dot {
+  display: grid;
+  place-items: center;
+  width: 1.6rem;
+  height: 1.6rem;
+  border: 2px solid var(--color-line-strong);
+  border-radius: 50%;
+}
+
+.stepDone {
+  color: var(--color-ok);
+}
+
+.stepDone .dot {
+  border-color: var(--color-ok);
+  background: var(--color-ok);
+  color: var(--color-card);
+}
+
+.stepActive {
+  color: var(--color-brand);
+}
+
+.stepActive .dot {
+  border-color: var(--color-brand);
+  animation: pulse 1.2s var(--ease) infinite;
+}
+
+@keyframes pulse {
+  50% {
+    box-shadow: 0 0 0 6px var(--color-brand-soft);
+  }
+}
+
+.skeleton {
+  height: 0.9rem;
+  border-radius: 6px;
+  background: linear-gradient(90deg, var(--color-paper-sunken), var(--color-line), var(--color-paper-sunken));
+  background-size: 200% 100%;
+  animation: shimmer 1.4s linear infinite;
+}
+
+@keyframes shimmer {
+  to {
+    background-position: -200% 0;
+  }
+}
+
+/* Validation issues, grouped by sheet */
+.sheetGroup {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.sheetName {
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-ink-soft);
+}
+
+.issueList {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.issue {
+  display: grid;
+  gap: var(--space-1);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--color-risk-line);
+  border-left-width: 4px;
+  border-radius: var(--radius-sm);
+  background: var(--color-risk-soft);
+}
+
+.issueWhere {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  color: var(--color-ink-soft);
+  font-size: var(--text-sm);
+}
+
+.fix {
+  color: var(--color-ink-soft);
+  font-size: var(--text-sm);
+}

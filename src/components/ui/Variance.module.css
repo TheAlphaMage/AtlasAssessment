@@ -1,0 +1,22 @@
+.variance {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-size: var(--text-sm);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.below {
+  color: var(--color-risk);
+}
+
+.above {
+  color: var(--color-ok);
+}
+
+.onPlan {
+  color: var(--color-ink-faint);
+  font-weight: 500;
+}

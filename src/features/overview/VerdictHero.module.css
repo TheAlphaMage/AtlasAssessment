@@ -1,0 +1,99 @@
+.hero {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(15rem, 1fr);
+  gap: var(--space-6);
+  align-items: center;
+  padding: var(--space-6);
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+  background: var(--color-hero);
+  color: var(--color-hero-text);
+  box-shadow: var(--shadow-card);
+}
+
+/* Big soft circles in the corner echo the ring on the right. Decorative only. */
+.hero::before,
+.hero::after {
+  content: "";
+  position: absolute;
+  border: 1px solid rgb(255 255 255 / 9%);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.hero::before {
+  top: -9rem;
+  left: -6rem;
+  width: 22rem;
+  height: 22rem;
+}
+
+.hero::after {
+  right: -5rem;
+  bottom: -12rem;
+  width: 26rem;
+  height: 26rem;
+}
+
+.copy,
+.visual {
+  position: relative;
+  z-index: 1;
+}
+
+.eyebrow {
+  margin-bottom: var(--space-3);
+  color: var(--color-hero-muted);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.headline {
+  font-family: var(--font-display);
+  font-size: var(--text-display);
+  font-weight: 500;
+  line-height: 1.22;
+  letter-spacing: -0.015em;
+  text-wrap: balance;
+}
+
+.headline strong {
+  font-weight: 700;
+}
+
+/* Marker-pen highlight for the money that is lost to the local market. */
+.local {
+  padding: 0 0.15em;
+  border-radius: 4px;
+  background: linear-gradient(transparent 58%, rgb(243 196 107 / 38%) 58%);
+  color: var(--color-hero-local);
+  font-weight: 700;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3) var(--space-4);
+  margin-top: var(--space-5);
+}
+
+.risk {
+  color: var(--color-hero-risk);
+  font-weight: 700;
+}
+
+.visual {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-5);
+}
+
+@media (max-width: 1000px) {
+  .hero {
+    grid-template-columns: 1fr;
+  }
+}

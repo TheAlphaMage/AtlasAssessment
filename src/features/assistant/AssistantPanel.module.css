@@ -1,0 +1,65 @@
+/* One readable column, centred. */
+.layout {
+  display: grid;
+  gap: var(--space-5);
+  width: 100%;
+  max-width: 52rem;
+  margin: 0 auto;
+}
+
+.controls {
+  display: grid;
+  gap: var(--space-4);
+  padding: 0 var(--space-5) var(--space-5);
+}
+
+.suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.suggestion {
+  padding: 0.45rem 0.9rem;
+  border: 1px solid var(--color-line-strong);
+  border-radius: var(--radius-pill);
+  background: var(--color-card);
+  font-size: var(--text-sm);
+  text-align: left;
+  transition:
+    border-color var(--duration-fast) var(--ease),
+    background-color var(--duration-fast) var(--ease);
+}
+
+.suggestion:hover:not(:disabled) {
+  border-color: var(--color-brand);
+  background: var(--color-brand-soft);
+}
+
+.suggestion:disabled {
+  opacity: 0.55;
+  cursor: progress;
+}
+
+.form {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.input {
+  flex: 1;
+  padding: 0.6rem 1rem;
+  border: 1px solid var(--color-line-strong);
+  border-radius: var(--radius-pill);
+  background: var(--color-card);
+}
+
+.thread {
+  display: grid;
+  gap: var(--space-5);
+}
+
+.empty {
+  color: var(--color-ink-faint);
+  text-align: center;
+}

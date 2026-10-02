@@ -25,11 +25,13 @@ npm ci            # install exact locked dependencies
 npm run dev       # http://localhost:3000  (development)
 ```
 
+A [Makefile](Makefile) wraps the same commands. Run `make` to list them: `make install`, `make dev`, `make test`, `make check` (typecheck, test and build), `make env` (creates `.env` from `.env.example`). Make is optional; every target is a plain npm script.
+
 On start the page loads the workbook, validates it, plans, and shows the result. **Reload workbook & re-plan** repeats all three steps, so after editing the `.xlsx` you only need to save it and click reload.
 
 | Task | Command |
 |---|---|
-| Tests (Vitest, 29 tests) | `npm test` |
+| Tests (Vitest, 46 tests) | `npm test` |
 | Type check | `npm run typecheck` |
 | Production build | `npm run build` |
 | Run production build | `npm start` (port 3000) |
@@ -55,7 +57,7 @@ PlanResult (computed; separate type) ──► src/lib/server/store.ts (in-memor
    ▼
 API  POST /api/load · POST /api/plan · GET /api/result · GET|POST /api/assistant
    ▼
-React UI  src/components/*   Overview · Production · Commercial · Allocations · Assistant
+React UI  src/features/*     Overview · Production · Commercial · Allocations · Assistant
                               ▲
 src/lib/assistant/*  explains PlanResult only (topics → minimal facts → model → grounding check)
 ```
@@ -69,6 +71,40 @@ src/lib/assistant/*  explains PlanResult only (topics → minimal facts → mode
 | `POST /api/assistant` | `{question}` → grounded explanation | 200 · 400 bad input · 409 no plan |
 
 Unexpected failures return typed JSON `500 {error, message}`. The UI never shows stale figures after a failed reload.
+
+## User interface
+
+The UI renders server-computed values only. It is organised by feature, and styles live in CSS Modules next to the component that uses them.
+
+```
+src/
+  app/                  Next.js pages and API routes (thin)
+  styles/               tokens.css (colours, type, spacing, dark theme), base.css, print.css
+  components/ui/        shared building blocks: Button, Pill, Card, Segmented, Icon, tables, …
+  components/           shared pieces that know the data (ResidualTable)
+  hooks/                useHotkeys, useTheme, useCountUp
+  features/
+    planner/            the shell: top bar, five-step navigation, loading / error states, quick-jump palette
+    overview/           verdict, Crop Flow diagram, decisions, plan-vs-actual bars, local residual
+    production/         farm × segment heat table
+    commercial/         client rows with reasons and sources
+    allocations/        traceable ledger, filters, plan policy and checks
+    assistant/          grounded planning assistant
+    trace/              click-to-trace and hover-to-highlight, shared by every view
+  lib/                  business logic (engine, validation, workbook, assistant). No UI code.
+```
+
+Design decisions, and why:
+
+- **One story per screen.** Overview opens with a one-sentence verdict, then shows the Crop Flow diagram: segments → clients → local market, with ribbons of real allocated tonnes. A manager can see what arrived, what was exported, who is short and what fell to the local market without reading a table.
+- **Production and Commercial are connected, not separate tables.** Each client at risk has a cause chain (farms below plan → segment gap → client short, or station limit → fruit left over → client short). On the Production table, cells whose gap left a client short carry a red frame and the client ID.
+- **Hover or focus any ID to follow it.** Client, farm and segment IDs light up their ribbons in the diagram. Click any ID to open its allocations.
+- **Colour never carries meaning alone.** Variances have arrows and signs, statuses have icons and words, and the shortage in the diagram is dashed. Every colour pair passes WCAG AA contrast in both themes (text 4.5:1, marks 3:1).
+- **Honest about money.** Amber always means value lost to the local market, and red always means a client at risk.
+- **Light and dark themes**, chosen from the system setting on first visit and remembered afterwards. Motion respects `prefers-reduced-motion`.
+- **Fonts are self-hosted** through `@fontsource-variable` packages, so a clean clone builds with no network access to a font service.
+
+Keyboard: `1`–`5` open the views, `/` focuses the main filter or question box, `Ctrl/Cmd + K` opens quick jump (any client, farm, segment or view), arrow keys move between the tabs. The Overview prints as a one-page committee brief.
 
 ## Deterministic planning policy (implemented exactly as briefed)
 
@@ -144,16 +180,16 @@ How an answer is produced:
 Optional configuration is through environment variables only; see [.env.example](.env.example).
 
 ```bash
+# DeepSeek (hosted). Put DEEPSEEK_API_KEY=… in .env (git-ignored); that alone enables it. Default model: deepseek-flash
+npm run dev
 # Free local model via Ollama (OpenAI-compatible endpoint)
 LLM_PROVIDER=openai-compatible LLM_MODEL=llama3.1:8b LLM_BASE_URL=http://localhost:11434/v1 npm run dev
-# Claude via the official Anthropic SDK (defaults to claude-opus-5-5; set LLM_MODEL to override)
-LLM_PROVIDER=anthropic LLM_API_KEY=sk-ant-… npm run dev
 ```
 
-The Anthropic path does three things:
-- requests low effort, which suits short explanations
-- enables the server-side refusal fallback on models that support it
-- treats a refusal as a provider error
+The DeepSeek path does three things:
+- asks for JSON output, which keeps the `{answer, evidence_ids}` reply parseable
+- turns off DeepSeek's reasoning phase and caps output tokens, which suits short explanations and keeps answers fast
+- sends the key only in the `Authorization` header from the server. The browser never sees it.
 
 ## Tests (`npm test`)
 
@@ -162,6 +198,9 @@ The Anthropic path does three things:
 | `tests/planning.test.ts` | Public baseline; outputs change when an input changes; price ordering and `client_id` tie-break; reference prices excluded from ordering and revenue; EXACT vs MINIMUM; smallest-upgrade then `farm_id`; station cap and reason; demand and farm-segment limits; residual; determinism under shuffled input |
 | `tests/validation.test.ts` | Duplicate or missing IDs; bad mode or segment; mix outside 0–1 and sum ≠ 1; negative, text and non-5 t quantities; capacity 0 or 503; missing reference price |
 | `tests/workbook.test.ts` | The real file loads and stays byte-identical (SHA-256); an edited `.xlsx` copy is rejected with sheet, row, ID and field; missing file |
+| `tests/flowLayout.test.ts` | Crop Flow maths: every exported and residual tonne has a ribbon, nodes stay on the canvas and scale with tonnes, no local node when nothing goes local, highlight matching by client, segment or farm |
+| `tests/paletteItems.test.ts` | Quick-jump entries (5 views, 10 clients, 20 farms, 4 segments), case-insensitive filtering, view vs trace actions |
+| `tests/provider.test.ts` | DeepSeek configuration and defaults, missing key or model reported, JSON-mode request body, no DeepSeek-only fields for other providers, HTTP error and empty-reply handling |
 | `tests/assistant.test.ts` | Grounded answer accepted, with only minimal facts sent; unknown ID, invented number and non-JSON output rejected; deterministic summaries pass the same grounding check; unsupported and action questions never call a model; no-key, provider-failure and timeout states are honest |
 
 ## Assumptions
@@ -184,7 +223,7 @@ The Anthropic path does three things:
 ## Verification performed
 
 - **Automated:**
-  - `npm test`: 29/29 passing.
+  - `npm test`: 46/46 passing.
   - `npm run typecheck` and `npm run build` succeed with no warnings.
 - **API (production build, curl):**
   - Before loading, `GET /api/result` returns 404 and `POST /api/plan` returns 409.
@@ -194,8 +233,11 @@ The Anthropic path does three things:
   - An off-topic question returns `unsupported`; a malformed body returns 400.
 - **Invalid workbook:** a temp copy with F07 mix = 1.4 and C01 demand = 52 returns 422 with both issues located, the plan is refused with 409, and the UI shows the validation table with no figures.
 - **Source file unchanged:** the workbook SHA-256 stays `46620fea…bb923cb` before and after all runs.
-- **Visual:** headless Edge screenshots of every tab at 1024 px and 1440 px. These led to layout fixes in the Commercial table and the segment bridge.
-- **Not verified:** a call to a real LLM provider (no key was available in the build environment). That path is covered only by unit tests with a mocked provider. Keyboard navigation (ARIA tabs with arrow keys, all IDs as buttons, visible focus rings) is implemented but was not tested by hand with a screen reader.
+- **Visual:** headless Chromium screenshots of every view at 1024 px and 1440 px, in light and dark themes. No page-level horizontal scroll at either width.
+- **Interaction (scripted browser):** hover and focus highlighting in the Crop Flow, `Ctrl+K` palette to Allocations, `1`–`5` and `/` shortcuts, arrow-key tabs, theme persistence after reload, and the loading, rejected-workbook and server-error screens (API responses faked in the browser).
+- **Accessibility checks:** colour contrast of every token pair in both themes (script), reduced-motion emulation, and the print layout of the Overview.
+- **Real model call:** `LLM_PROVIDER` unset with only `DEEPSEEK_API_KEY` present uses DeepSeek (`deepseek-flash`). The question *Which clients are at risk and why?* returned a grounded answer that passed validation, citing C02, C09 and C08.
+- **Not verified:** a screen reader pass (keyboard use and ARIA roles are implemented and scripted, but not tested with NVDA or VoiceOver), and browsers other than Chromium. The UI uses `color-mix()` and the native `<dialog>` element, which need a current browser.
 
 ## AI coding tools disclosure
 

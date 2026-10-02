@@ -1,0 +1,10 @@
+.total {
+  display: grid;
+  justify-items: end;
+  gap: 1px;
+}
+
+.plan {
+  color: var(--color-ink-faint);
+  font-size: var(--text-xs);
+}

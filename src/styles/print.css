@@ -1,0 +1,24 @@
+/*
+ * Print styles: the Overview prints as a one-page committee brief.
+ * Navigation, buttons and the assistant are hidden. Elements opt out with data-print="hide".
+ */
+
+@media print {
+  body::before {
+    display: none;
+  }
+
+  body {
+    background: #fff;
+    color: #000;
+  }
+
+  [data-print="hide"] {
+    display: none !important;
+  }
+
+  * {
+    animation: none !important;
+    box-shadow: none !important;
+  }
+}

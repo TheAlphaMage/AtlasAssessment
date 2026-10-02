@@ -1,0 +1,40 @@
+.group {
+  display: inline-flex;
+  margin: 0;
+  padding: 3px;
+  gap: 2px;
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-pill);
+  background: var(--color-paper-sunken);
+}
+
+.option {
+  cursor: pointer;
+}
+
+.face {
+  display: block;
+  padding: 0.3rem 0.85rem;
+  border-radius: var(--radius-pill);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-ink-soft);
+  transition:
+    background-color var(--duration-fast) var(--ease),
+    color var(--duration-fast) var(--ease);
+}
+
+.option:hover .face {
+  color: var(--color-ink);
+}
+
+.option input:checked + .face {
+  background: var(--color-card);
+  color: var(--color-brand);
+  box-shadow: 0 1px 3px rgb(40 40 20 / 18%);
+}
+
+.option input:focus-visible + .face {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 1px;
+}

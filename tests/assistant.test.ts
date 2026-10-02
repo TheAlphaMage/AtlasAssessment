@@ -13,7 +13,7 @@ beforeAll(async () => {
   result = plan((await loadDataset(BASELINE_WORKBOOK)).dataset!);
 });
 
-const CONFIG: ProviderConfig = { provider: "anthropic", model: "test-model", apiKey: "test", baseUrl: null, timeoutMs: 50 };
+const CONFIG: ProviderConfig = { provider: "deepseek", model: "test-model", apiKey: "test", baseUrl: null, timeoutMs: 50 };
 const withModel = (reply: string | (() => Promise<string>)): AssistantDeps => ({
   config: CONFIG,
   configProblem: null,

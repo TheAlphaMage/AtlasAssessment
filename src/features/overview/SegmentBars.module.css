@@ -1,0 +1,113 @@
+.list {
+  display: grid;
+  margin: 0;
+  padding: 0 var(--space-5) var(--space-3);
+  list-style: none;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 9rem minmax(0, 1fr) minmax(12rem, 18rem);
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-3) 0;
+  border-top: 1px solid var(--color-line);
+}
+
+.row:first-child {
+  border-top: 0;
+}
+
+.name {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* Both bars start at the left. The outline is the plan, the solid fill is the actual crop. */
+.track {
+  position: relative;
+  height: 1.6rem;
+}
+
+.plan,
+.actual {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: calc(var(--percent) * 1%);
+  border-radius: 6px;
+}
+
+.plan {
+  border: 2px dashed var(--color-line-strong);
+}
+
+.actual {
+  top: 5px;
+  bottom: 5px;
+  animation: growBar var(--duration-slow) var(--ease) both;
+  transform-origin: left;
+}
+
+@keyframes growBar {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+.segmentA {
+  background: var(--color-seg-a);
+}
+
+.segmentB {
+  background: var(--color-seg-b);
+}
+
+.segmentC {
+  background: var(--color-seg-c);
+}
+
+.segmentD {
+  background: var(--color-seg-d);
+}
+
+.figures {
+  display: grid;
+  gap: 2px;
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.split {
+  color: var(--color-ink-faint);
+}
+
+.local {
+  color: var(--color-local);
+  font-weight: 700;
+}
+
+.details {
+  padding: var(--space-3) var(--space-5) var(--space-4);
+  border-top: 1px solid var(--color-line);
+}
+
+.details summary {
+  cursor: pointer;
+  color: var(--color-brand);
+  font-size: var(--text-sm);
+  font-weight: 700;
+}
+
+.details[open] summary {
+  margin-bottom: var(--space-3);
+}
+
+@media (max-width: 1000px) {
+  .row {
+    grid-template-columns: 1fr;
+    gap: var(--space-2);
+  }
+}

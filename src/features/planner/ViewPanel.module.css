@@ -1,0 +1,17 @@
+.panel {
+  display: grid;
+  gap: var(--space-5);
+  padding-top: var(--space-4);
+  animation: panelIn var(--duration) var(--ease) both;
+}
+
+.panel:focus {
+  outline: none;
+}
+
+@keyframes panelIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}

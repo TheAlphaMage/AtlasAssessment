@@ -1,0 +1,12 @@
+/* Sits above the paper-grain layer drawn by body::before. */
+.app {
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
+}
+
+.page {
+  max-width: var(--page-max-width);
+  margin: 0 auto;
+  padding: 0 var(--page-gutter) var(--space-7);
+}
