@@ -1,1 +1,0 @@
-export { AllocationsView } from "./AllocationsView";

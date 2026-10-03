@@ -9,7 +9,7 @@
 import type { AssistantResponse, PlanResult } from "../domain/types";
 import { validateModelOutput } from "./grounding";
 import { createCompleter, readProviderConfig, type Complete, type ProviderConfig } from "./provider";
-import { SUPPORTED_QUESTIONS, buildContext, classify, deterministicAnswer, isActionRequest } from "./topics";
+import { buildContext, classify, deterministicAnswer, isActionRequest, isSmallTalk } from "./topics";
 
 export const MAX_QUESTION_CHARS = 500;
 
@@ -38,12 +38,23 @@ export async function answerQuestion(question: string, result: PlanResult, deps:
   const base = { provider: deps.config?.provider ?? null, model: deps.config?.model ?? null };
   const q = question.trim();
 
+  if (isSmallTalk(q)) {
+    return {
+      ...base,
+      status: "unsupported",
+      source: "none",
+      notice: null,
+      answer: "Hi. I explain today's computed plan: clients at risk, segment gaps and the local market. Pick a question below.",
+      evidenceIds: [],
+    };
+  }
+
   if (isActionRequest(q)) {
     return {
       ...base,
       status: "unsupported",
       source: "none",
-      notice: "Read-only assistant",
+      notice: null,
       answer:
         "I can only explain the computed plan. Approving, changing or executing allocations stays with the Production and Commercial teams.",
       evidenceIds: [],
@@ -56,12 +67,8 @@ export async function answerQuestion(question: string, result: PlanResult, deps:
       ...base,
       status: "unsupported",
       source: "none",
-      notice: "Not covered by the loaded data",
-      answer:
-        "That information is unavailable in the loaded workbook and the computed plan. I can explain:\n" +
-        Object.values(SUPPORTED_QUESTIONS)
-          .map((s) => `• ${s}`)
-          .join("\n"),
+      notice: null,
+      answer: "That is unavailable in today's plan. I can explain clients at risk, segment gaps and the local market.",
       evidenceIds: [],
     };
   }

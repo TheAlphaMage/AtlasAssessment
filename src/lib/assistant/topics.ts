@@ -24,6 +24,13 @@ const TOPIC_PATTERNS: [Topic, RegExp][] = [
   ["at_risk", /\b(risk|at-risk|partial|unserved|short|shortages?|status|served)\b/i],
 ];
 
+/** Greetings, thanks and "what can you do?" get a short friendly reply instead of "unavailable". */
+const SMALL_TALK = /^(hi|hello|hey|hiya|good (morning|afternoon|evening)|thanks?|thank you|ok(ay)?|help|who are you|what can you do)\b[\s!.?]*$/i;
+
+export function isSmallTalk(question: string): boolean {
+  return SMALL_TALK.test(question.trim());
+}
+
 export function isActionRequest(question: string): boolean {
   return ACTION_REQUEST.test(question);
 }

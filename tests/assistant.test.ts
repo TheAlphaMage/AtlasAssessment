@@ -74,6 +74,16 @@ describe("assistant grounding", () => {
 });
 
 describe("assistant honesty and boundaries", () => {
+  it("answers greetings briefly and kindly, without calling a model or saying unavailable", async () => {
+    const deps = withModel("{}");
+    for (const greeting of ["hello", "Hi!", "thanks", "what can you do?"]) {
+      const response = await answerQuestion(greeting, result, deps);
+      expect(response).toMatchObject({ status: "unsupported", source: "none", notice: null, evidenceIds: [] });
+      expect(response.answer).not.toMatch(/unavailable/);
+    }
+    expect(deps.complete).not.toHaveBeenCalled();
+  });
+
   it("answers unsupported questions as unavailable without calling a model", async () => {
     const deps = withModel("{}");
     const response = await answerQuestion("What will the weather be tomorrow?", result, deps);
