@@ -1,60 +1,53 @@
-/** Builds and filters the entries of the Ctrl/Cmd+K quick-jump palette. Pure functions, covered by tests. */
+/** Builds the entries of the ⌘K command menu: every page, client, farm and segment. Pure, covered by tests. */
 import { SEGMENTS } from "@/lib/domain/constants";
 import type { PlanResult } from "@/lib/domain/types";
-import type { Selection } from "@/features/trace";
-import { VIEWS, type ViewId } from "./views";
+import { ROUTES } from "@/features/navigation/routes";
 
-/** What happens when a palette entry is chosen: open a view, or trace an ID in Allocations. */
-export type PaletteAction = { type: "view"; view: ViewId } | { type: "trace"; selection: Selection };
+/** Choosing an entry either goes to a page or opens a detail drawer. */
+export type PaletteAction = { type: "navigate"; href: string } | { type: "open"; id: string };
+
+export const PALETTE_GROUPS = ["Pages", "Clients", "Farms", "Segments"] as const;
 
 export interface PaletteItem {
-  id: string;
-  group: "View" | "Client" | "Farm" | "Segment";
+  key: string;
+  group: (typeof PALETTE_GROUPS)[number];
   label: string;
   hint: string;
   action: PaletteAction;
 }
 
-/** Lists everything the user can jump to: the five views, every client, farm and segment. */
 export function buildPaletteItems(result: PlanResult): PaletteItem[] {
-  const viewItems: PaletteItem[] = VIEWS.map((view, index) => ({
-    id: `view-${view.id}`,
-    group: "View",
-    label: view.label,
-    hint: `Step ${index + 1} · ${view.step}`,
-    action: { type: "view", view: view.id },
+  const pages: PaletteItem[] = ROUTES.map((route) => ({
+    key: `page-${route.href}`,
+    group: "Pages",
+    label: route.title,
+    hint: route.group,
+    action: { type: "navigate", href: route.href },
   }));
 
-  const clientItems: PaletteItem[] = result.clients.map((client) => ({
-    id: `client-${client.clientId}`,
-    group: "Client",
+  const clients: PaletteItem[] = result.clients.map((client) => ({
+    key: `client-${client.clientId}`,
+    group: "Clients",
     label: client.clientId,
     hint: `${client.clientName} · ${client.acceptanceMode} ${client.requestedSegment} · ${client.status.toLowerCase()}`,
-    action: { type: "trace", selection: { clientId: client.clientId } },
+    action: { type: "open", id: client.clientId },
   }));
 
-  const farmItems: PaletteItem[] = result.farms.map((farm) => ({
-    id: `farm-${farm.farmId}`,
-    group: "Farm",
+  const farms: PaletteItem[] = result.farms.map((farm) => ({
+    key: `farm-${farm.farmId}`,
+    group: "Farms",
     label: farm.farmId,
     hint: farm.farmName,
-    action: { type: "trace", selection: { farmId: farm.farmId } },
+    action: { type: "open", id: farm.farmId },
   }));
 
-  const segmentItems: PaletteItem[] = SEGMENTS.map((segment) => ({
-    id: `segment-${segment}`,
-    group: "Segment",
+  const segments: PaletteItem[] = SEGMENTS.map((segment) => ({
+    key: `segment-${segment}`,
+    group: "Segments",
     label: `Segment ${segment}`,
-    hint: "Allocations from this quality segment",
-    action: { type: "trace", selection: { segment } },
+    hint: "Quality segment",
+    action: { type: "open", id: segment },
   }));
 
-  return [...viewItems, ...clientItems, ...farmItems, ...segmentItems];
-}
-
-/** Keeps the items whose label or hint contains the typed text (case-insensitive). */
-export function filterPaletteItems(items: PaletteItem[], query: string): PaletteItem[] {
-  const needle = query.trim().toLowerCase();
-  if (!needle) return items;
-  return items.filter((item) => `${item.label} ${item.hint}`.toLowerCase().includes(needle));
+  return [...pages, ...clients, ...farms, ...segments];
 }

@@ -1,6 +1,6 @@
 /** Filtering for the Allocations view. Pure functions, so the rules are easy to read and test. */
 import type { Allocation, Residual, Segment } from "@/lib/domain/types";
-import type { Selection } from "@/features/trace";
+import type { Selection } from "@/features/entities/selection";
 
 function matches(filter: Selection, farmId: string, segment: Segment, clientId?: string): boolean {
   if (filter.farmId && filter.farmId !== farmId) return false;

@@ -1,6 +1,6 @@
 /**
- * Turns the plan into "decisions for the committee": one entry per client at risk,
- * with the chain of causes that led to the shortage (farm gaps -> segment gap -> client).
+ * Explains why a client is short: the chain of causes from farm gaps (or the station limit) to the shortage.
+ * Used by the client drawer's "Why" timeline. Pure, covered by tests.
  */
 import type { ClientResult, GapImpact, PlanResult, Segment } from "@/lib/domain/types";
 
@@ -24,7 +24,7 @@ export function buildDecisions(result: PlanResult): Decision[] {
   return result.clients.filter((client) => client.atRisk).map((client) => buildDecision(client, result));
 }
 
-function buildDecision(client: ClientResult, result: PlanResult): Decision {
+export function buildDecision(client: ClientResult, result: PlanResult): Decision {
   const clientStep: ChainStep = { kind: "client", clientId: client.clientId, shortT: client.remainingT };
   const steps =
     client.shortageReason === "STATION_CAPACITY_REACHED"

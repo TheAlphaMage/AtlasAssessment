@@ -1,5 +1,7 @@
 "use client";
 
+/** Global single-key and Ctrl/Cmd shortcuts, switched off while the user types in a field. */
+
 import { useEffect } from "react";
 
 /** Maps a key to what it does. Use "mod+k" for Ctrl+K (Windows/Linux) or Cmd+K (Mac). */

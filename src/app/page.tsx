@@ -1,5 +1,6 @@
-import { Workspace } from "@/features/planner";
+import { redirect } from "next/navigation";
 
-export default function Page() {
-  return <Workspace />;
+/** The workspace starts on the Overview. */
+export default function Home() {
+  redirect("/overview");
 }

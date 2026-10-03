@@ -4,7 +4,7 @@ import {
   computeFlowLayout,
   ribbonMatchesSelection,
   ribbonPath,
-} from "@/features/overview/flowLayout";
+} from "@/features/flow/flowLayout";
 import { plan } from "@/lib/planning/engine";
 import { loadDataset } from "@/lib/workbook/loadDataset";
 import { BASELINE_WORKBOOK } from "./fixtures";

@@ -5,7 +5,7 @@
  * Worked example: with a scale of 0.5 px per tonne, an allocation of 40 t becomes a ribbon 20 px thick,
  * and a client that asked for 50 t gets a node 25 px tall (20 px filled, 5 px dashed for the missing 10 t).
  */
-import type { Selection } from "@/features/trace";
+import type { Selection } from "@/features/entities/selection";
 import type { ClientResult, PlanResult, Segment } from "@/lib/domain/types";
 
 /** The parts of a plan the diagram needs. */

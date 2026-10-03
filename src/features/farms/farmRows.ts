@@ -1,31 +1,43 @@
-/** Sorting and filtering of the farm table. Pure functions, so they are easy to test. */
+/** Filtering and sort values for the farm table. Pure functions, so they are easy to test. */
 import { SEGMENTS } from "@/lib/domain/constants";
-import type { FarmResult } from "@/lib/domain/types";
+import type { FarmResult, Segment } from "@/lib/domain/types";
 
-export type SortKey = "farm" | "shortfall" | "local";
-export type FarmFilter = "all" | "below";
-
-const compareFarmIds = (a: FarmResult, b: FarmResult) => (a.farmId < b.farmId ? -1 : 1);
+export type FarmFilter = "all" | "below" | "local";
+/** Which figure the A–D cells show. */
+export type CellMode = "actual" | "plan" | "variance" | "mix";
+export type FarmSortKey = "farm" | "capacity" | Segment | "total" | "variance" | "exported" | "local";
 
 /** True when the farm delivered less than planned in total or in any single segment. */
 export function isBelowPlan(farm: FarmResult): boolean {
   return farm.varianceTotalT < 0 || SEGMENTS.some((segment) => farm.segments[segment].varianceT < 0);
 }
 
-export function selectFarms(farms: FarmResult[], sortKey: SortKey, filter: FarmFilter): FarmResult[] {
-  const visible = filter === "below" ? farms.filter(isBelowPlan) : [...farms];
-
-  if (sortKey === "local") {
-    return visible.sort((a, b) => b.localT - a.localT || compareFarmIds(a, b));
-  }
-  if (sortKey === "shortfall") {
-    return visible.sort((a, b) => a.varianceTotalT - b.varianceTotalT || compareFarmIds(a, b));
-  }
-  return visible.sort(compareFarmIds);
+export function filterFarms(farms: FarmResult[], filter: FarmFilter, search: string): FarmResult[] {
+  const needle = search.trim().toLowerCase();
+  return farms.filter((farm) => {
+    if (filter === "below" && !isBelowPlan(farm)) return false;
+    if (filter === "local" && farm.localT <= 0) return false;
+    if (!needle) return true;
+    return `${farm.farmId} ${farm.farmName}`.toLowerCase().includes(needle);
+  });
 }
 
-/** The biggest plan-versus-actual gap in any cell. The heat colours are scaled against it. */
-export function largestSegmentGap(farms: FarmResult[]): number {
-  const gaps = farms.flatMap((farm) => SEGMENTS.map((segment) => Math.abs(farm.segments[segment].varianceT)));
-  return Math.max(...gaps, 1);
+/** The number one segment cell shows in the chosen mode. */
+export function cellValue(farm: FarmResult, segment: Segment, mode: CellMode): number {
+  const figures = farm.segments[segment];
+  if (mode === "plan") return figures.expectedT;
+  if (mode === "variance") return figures.varianceT;
+  if (mode === "mix") return figures.mix;
+  return figures.actualT;
+}
+
+/** The value a column sorts by. Segment columns sort by whatever the cells currently show. */
+export function sortValue(farm: FarmResult, key: FarmSortKey, mode: CellMode): number | string {
+  if (key === "farm") return farm.farmId;
+  if (key === "capacity") return farm.expectedCapacityT;
+  if (key === "total") return farm.actualTotalT;
+  if (key === "variance") return farm.varianceTotalT;
+  if (key === "exported") return farm.exportedT;
+  if (key === "local") return farm.localT;
+  return cellValue(farm, key, mode);
 }

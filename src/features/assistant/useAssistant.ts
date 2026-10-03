@@ -1,5 +1,7 @@
 "use client";
 
+/** Talks to the assistant API and keeps the chat history for this visit. */
+
 import { useEffect, useState } from "react";
 import type { ApiError, AssistantProviderStatus, AssistantResponse } from "@/lib/domain/types";
 
@@ -13,7 +15,7 @@ export interface Exchange {
 
 /**
  * Talks to the assistant API: reads which AI provider is configured and sends questions.
- * Newest exchange is first in the list.
+ * Exchanges are kept oldest first, like a chat.
  */
 export function useAssistant() {
   const [provider, setProvider] = useState<AssistantProviderStatus | null>(null);
@@ -32,7 +34,7 @@ export function useAssistant() {
 
     const id = Date.now();
     setIsBusy(true);
-    setExchanges((list) => [{ id, question, response: null, error: null }, ...list]);
+    setExchanges((list) => [...list, { id, question, response: null, error: null }]);
 
     const { response, error } = await sendQuestion(question);
     setExchanges((list) => list.map((exchange) => (exchange.id === id ? { ...exchange, response, error } : exchange)));

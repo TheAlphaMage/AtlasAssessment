@@ -1,5 +1,7 @@
 "use client";
 
+/** Talks to the server: load + validate the workbook, then compute the plan. Holds the current phase. */
+
 import { useCallback, useEffect, useState } from "react";
 import type { LoadResponse, PlanResponse, ValidationIssue } from "@/lib/domain/types";
 import { describeFailure, postJson } from "./api";
@@ -51,5 +53,6 @@ export function usePlanner() {
     void reload();
   }, [reload]);
 
-  return { phase, reload: () => void reload() };
+  const reloadNow = useCallback(() => void reload(), [reload]);
+  return { phase, reload: reloadNow };
 }
