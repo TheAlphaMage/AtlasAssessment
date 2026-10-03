@@ -9,7 +9,7 @@ interface KpiCardProps {
   value: ReactNode;
   detail?: ReactNode;
   icon?: LucideIcon;
-  /** "warning" turns the value amber (money lost to the local market). */
+  /** "warning" turns the value coral (money lost to the local market). */
   tone?: "default" | "warning";
   /** Optional extra content under the detail line, e.g. a progress bar. */
   children?: ReactNode;

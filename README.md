@@ -31,7 +31,7 @@ On start the page loads the workbook, validates it, plans, and shows the result.
 
 | Task | Command |
 |---|---|
-| Tests (Vitest, 46 tests) | `npm test` |
+| Tests (Vitest, 56 tests) | `npm test` |
 | Type check | `npm run typecheck` |
 | Production build | `npm run build` |
 | Run production build | `npm start` (port 3000) |
@@ -57,7 +57,7 @@ PlanResult (computed; separate type) ──► src/lib/server/store.ts (in-memor
    ▼
 API  POST /api/load · POST /api/plan · GET /api/result · GET|POST /api/assistant
    ▼
-React UI  src/features/*     Overview · Production · Commercial · Allocations · Assistant
+React UI  src/features/*     9 pages + detail drawers (see User interface)
                               ▲
 src/lib/assistant/*  explains PlanResult only (topics → minimal facts → model → grounding check)
 ```
@@ -74,37 +74,57 @@ Unexpected failures return typed JSON `500 {error, message}`. The UI never shows
 
 ## User interface
 
-The UI renders server-computed values only. It is organised by feature, and styles live in CSS Modules next to the component that uses them.
+Next.js App Router pages, styled with **Tailwind CSS v4** and **shadcn/ui** (Radix primitives), with `lucide-react` icons and the self-hosted Inter font. The UI renders server-computed values only.
+
+| Sidebar group | Page | What it answers |
+|---|---|---|
+| Today | `/overview` | The day in one screen: received vs plan, station, export rate, local market, value, orders needing attention |
+| Today | `/flow` | Where every tonne goes, from quality segment to client order or the local market (Sankey) |
+| Production | `/farms` | Plan vs actual for 20 farms. Cells switch between actual, plan, variance and mix %. Every column can be sorted |
+| Production | `/segments` | Segments A–D: plan vs actual, exported vs local, clients served or left short |
+| Commercial | `/clients` | The 10 orders in serving order: rule, demand, allocated, remaining, revenue, status, reason |
+| Plan | `/allocations` | Every allocation row (farm, segment, client, tonnes, upgrade, revenue), filterable and groupable |
+| Plan | `/local-market` | The residual: how much, why, from which farms, what it is worth |
+| Explain | `/assistant` | Grounded chat about the plan, with evidence links |
+| System | `/data-health` | Workbook validity, the 7 plan checks and the planning policy |
+
+Any client, farm or segment opens a **detail drawer**. The client drawer shows a "Why" timeline: farms below plan → segment gap → client short, or station full → fruit left over → client short. Drawers live in the URL (`?open=C02`), so a link to one can be shared and the browser's Back button closes it. A warning banner keeps the station limit, the local residual and the short orders visible on every page.
 
 ```
 src/
-  app/                  Next.js pages and API routes (thin)
-  styles/               tokens.css (colours, type, spacing, dark theme), base.css, print.css
-  components/ui/        shared building blocks: Button, Pill, Card, Segmented, Icon, tables, …
-  components/           shared pieces that know the data (ResidualTable)
-  hooks/                useHotkeys, useTheme, useCountUp
-  features/
-    planner/            the shell: top bar, five-step navigation, loading / error states, quick-jump palette
-    overview/           verdict, Crop Flow diagram, decisions, plan-vs-actual bars, local residual
-    production/         farm × segment heat table
-    commercial/         client rows with reasons and sources
-    allocations/        traceable ledger, filters, plan policy and checks
-    assistant/          grounded planning assistant
-    trace/              click-to-trace and hover-to-highlight, shared by every view
+  app/(workspace)/      one thin page.tsx per route, plus the shared layout (sidebar, header, drawer, ⌘K)
+  app/api/              API routes (unchanged)
+  components/ui/        shadcn/ui primitives (generated, lightly themed)
+  components/app/       app building blocks: KpiCard, StatusBadge, Delta, SegmentDot, AppSidebar, AppHeader, …
+  features/<page>/      one folder per page (overview, flow, farms, segments, clients, allocations, …)
+  features/drawers/     client, farm and segment drawers, "Why" timeline
+  features/plan/        PlanProvider: loads and plans once, shared by every page; loading and error states
+  hooks/                small reusable hooks (sorting, URL state, shortcuts, number tween)
   lib/                  business logic (engine, validation, workbook, assistant). No UI code.
 ```
 
 Design decisions, and why:
 
-- **One story per screen.** Overview opens with a one-sentence verdict, then shows the Crop Flow diagram: segments → clients → local market, with ribbons of real allocated tonnes. A manager can see what arrived, what was exported, who is short and what fell to the local market without reading a table.
-- **Production and Commercial are connected, not separate tables.** Each client at risk has a cause chain (farms below plan → segment gap → client short, or station limit → fruit left over → client short). On the Production table, cells whose gap left a client short carry a red frame and the client ID.
-- **Hover or focus any ID to follow it.** Client, farm and segment IDs light up their ribbons in the diagram. Click any ID to open its allocations.
-- **Colour never carries meaning alone.** Variances have arrows and signs, statuses have icons and words, and the shortage in the diagram is dashed. Every colour pair passes WCAG AA contrast in both themes (text 4.5:1, marks 3:1).
-- **Honest about money.** Amber always means value lost to the local market, and red always means a client at risk.
-- **Light and dark themes**, chosen from the system setting on first visit and remembered afterwards. Motion respects `prefers-reduced-motion`.
-- **Fonts are self-hosted** through `@fontsource-variable` packages, so a clean clone builds with no network access to a font service.
+- **One job per page, details on demand.** The Overview fits on one screen. Everything else has its own page or opens in a drawer, so no page repeats the same facts.
+- **Production and Commercial are linked.** Shortage reasons, the drawer's "Why" timeline, the red dots on farm cells that left a client short, and the segment cards all connect a farm's variance to a client's risk.
+- **One palette, colour only for meaning.** Slate neutrals (#1E293B / #F8FAFC / #E2E8F0), indigo #4F46E5 for actions and quality segments (dark A to light D), teal #0D9488 = complete / above plan, coral #F43F5E = anything needing attention (below plan, partial orders, the local market). Darker shades of the same hues are used for small text so it passes AA contrast. Colour is never the only signal: variances have arrows and signs, statuses have words, and shortages are dashed.
+- **Short copy.** Pages have a title and at most a few muted words; definitions live in ⓘ tooltips. The assistant answers greetings and off-topic questions in one line, with follow-up chips.
+- **Contrast:** all text colour pairs pass WCAG AA (4.5:1) in both themes. The lightest segment fills and the amber stripes are below 3:1 on white. They are decoration, always shown next to a text label.
+- **Smooth:**
+  - pages cross-fade (React `<ViewTransition>`) and drawers slide in
+  - numbers glide to new values after a re-plan, and a toast confirms each re-plan
+  - all of it is off under `prefers-reduced-motion`
+- **Light and dark themes** (`next-themes`), following the system setting by default.
+- **Fonts are self-hosted** (`@fontsource-variable/inter`), so a clean clone builds without network access to a font service.
 
-Keyboard: `1`–`5` open the views, `/` focuses the main filter or question box, `Ctrl/Cmd + K` opens quick jump (any client, farm, segment or view), arrow keys move between the tabs. The Overview prints as a one-page committee brief.
+Keyboard shortcuts:
+- `1`–`9` open the pages in sidebar order.
+- `/` focuses the page's search, filter or question box.
+- `Ctrl/Cmd + K` opens the command menu (any page, client, farm, segment, re-plan, theme).
+- `Ctrl/Cmd + B` collapses the sidebar.
+- In a drawer, `←`/`→` step through clients or farms and `Esc` closes it.
+
+The Overview prints as a one-page brief.
 
 ## Deterministic planning policy (implemented exactly as briefed)
 
@@ -198,10 +218,12 @@ The DeepSeek path does three things:
 | `tests/planning.test.ts` | Public baseline; outputs change when an input changes; price ordering and `client_id` tie-break; reference prices excluded from ordering and revenue; EXACT vs MINIMUM; smallest-upgrade then `farm_id`; station cap and reason; demand and farm-segment limits; residual; determinism under shuffled input |
 | `tests/validation.test.ts` | Duplicate or missing IDs; bad mode or segment; mix outside 0–1 and sum ≠ 1; negative, text and non-5 t quantities; capacity 0 or 503; missing reference price |
 | `tests/workbook.test.ts` | The real file loads and stays byte-identical (SHA-256); an edited `.xlsx` copy is rejected with sheet, row, ID and field; missing file |
-| `tests/flowLayout.test.ts` | Crop Flow maths: every exported and residual tonne has a ribbon, nodes stay on the canvas and scale with tonnes, no local node when nothing goes local, highlight matching by client, segment or farm |
-| `tests/paletteItems.test.ts` | Quick-jump entries (5 views, 10 clients, 20 farms, 4 segments), case-insensitive filtering, view vs trace actions |
+| `tests/flowLayout.test.ts` | Crop flow maths: every exported and residual tonne has a ribbon, nodes stay on the canvas and scale with tonnes, no local node when nothing goes local, highlight matching by client, segment or farm |
+| `tests/paletteItems.test.ts` | Command menu entries (every page, 10 clients, 20 farms, 4 segments), navigate vs open-drawer actions, unique keys |
+| `tests/tableHelpers.test.ts` | Stable sorting; farm filters (below plan, local, search); segment columns sort by the figure on screen; ledger grouping subtotals add up to the plan |
+| `tests/workspaceHelpers.test.ts` | Global banner text and link; drawer URL parameter parsing; the client "Why" chain for C02 (farms → segment A → short) and C08 (station → local → short) |
 | `tests/provider.test.ts` | DeepSeek configuration and defaults, missing key or model reported, JSON-mode request body, no DeepSeek-only fields for other providers, HTTP error and empty-reply handling |
-| `tests/assistant.test.ts` | Grounded answer accepted, with only minimal facts sent; unknown ID, invented number and non-JSON output rejected; deterministic summaries pass the same grounding check; unsupported and action questions never call a model; no-key, provider-failure and timeout states are honest |
+| `tests/assistant.test.ts` | Greetings answered briefly without a model; grounded answer accepted, with only minimal facts sent; unknown ID, invented number and non-JSON output rejected; deterministic summaries pass the same grounding check; unsupported and action questions never call a model; no-key, provider-failure and timeout states are honest |
 
 ## Assumptions
 
@@ -223,7 +245,7 @@ The DeepSeek path does three things:
 ## Verification performed
 
 - **Automated:**
-  - `npm test`: 46/46 passing.
+  - `npm test`: 56/56 passing.
   - `npm run typecheck` and `npm run build` succeed with no warnings.
 - **API (production build, curl):**
   - Before loading, `GET /api/result` returns 404 and `POST /api/plan` returns 409.
@@ -233,11 +255,20 @@ The DeepSeek path does three things:
   - An off-topic question returns `unsupported`; a malformed body returns 400.
 - **Invalid workbook:** a temp copy with F07 mix = 1.4 and C01 demand = 52 returns 422 with both issues located, the plan is refused with 409, and the UI shows the validation table with no figures.
 - **Source file unchanged:** the workbook SHA-256 stays `46620fea…bb923cb` before and after all runs.
-- **Visual:** headless Chromium screenshots of every view at 1024 px and 1440 px, in light and dark themes. No page-level horizontal scroll at either width.
-- **Interaction (scripted browser):** hover and focus highlighting in the Crop Flow, `Ctrl+K` palette to Allocations, `1`–`5` and `/` shortcuts, arrow-key tabs, theme persistence after reload, and the loading, rejected-workbook and server-error screens (API responses faked in the browser).
-- **Accessibility checks:** colour contrast of every token pair in both themes (script), reduced-motion emulation, and the print layout of the Overview.
+- **Visual:** headless Chromium screenshots of every page at 1024 px and 1440 px, in light and dark themes, and of the client drawer.
+- **Interaction (scripted browser, no console errors):**
+  - A row click opens the drawer (`?open=C02`). `→` steps to C03 and `Esc` closes the drawer.
+  - The banner link opens the at-risk tab (3 rows). `Ctrl+K` → C08 opens its drawer.
+  - `3` and `6` switch pages, and `/` focuses the farm search.
+  - The drawer's "Open in Allocations" link filters the ledger.
+  - Re-plan shows the toast, and the Farms table sorts by local tonnes.
+  - The rejected-workbook and server-error screens render inside the app shell (API responses faked in the browser).
+- **Accessibility checks:**
+  - A script checks colour contrast of the theme tokens in both themes. All text pairs pass; the lighter segment fills are decorative and always labelled.
+  - Reduced-motion emulation shows final numbers at once.
+  - In print emulation, the sidebar and header are hidden.
 - **Real model call:** `LLM_PROVIDER` unset with only `DEEPSEEK_API_KEY` present uses DeepSeek (`deepseek-flash`). The question *Which clients are at risk and why?* returned a grounded answer that passed validation, citing C02, C09 and C08.
-- **Not verified:** a screen reader pass (keyboard use and ARIA roles are implemented and scripted, but not tested with NVDA or VoiceOver), and browsers other than Chromium. The UI uses `color-mix()` and the native `<dialog>` element, which need a current browser.
+- **Not verified:** a screen reader pass (keyboard use and ARIA roles are implemented and scripted, but not tested with NVDA or VoiceOver), and browsers other than Chromium. The UI uses `color-mix()` and the View Transitions API, which need a current browser (older browsers simply skip the animations).
 
 ## AI coding tools disclosure
 
