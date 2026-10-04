@@ -65,10 +65,10 @@ src/lib/assistant/*  explains PlanResult only (topics → minimal facts → mode
 | Endpoint | Purpose | Responses |
 |---|---|---|
 | `POST /api/load` | Read and validate the workbook; clears any previous plan | 200 `valid` summary · 422 list of issues |
-| `POST /api/plan` | Run the engine on the loaded dataset | 200 `PlanResult` · 409 if nothing valid is loaded |
-| `GET /api/result` | Latest computed plan | 200 · 404 if none |
+| `POST /api/plan` | Run the engine on the validated workbook (loads it first if this server instance has not) | 200 `PlanResult` · 422 if the workbook is invalid |
+| `GET /api/result` | Current plan (computed on demand) | 200 · 404 if the workbook is invalid |
 | `GET /api/assistant` | Is an AI provider configured? (never returns keys) | 200 |
-| `POST /api/assistant` | `{question}` → grounded explanation | 200 · 400 bad input · 409 no plan |
+| `POST /api/assistant` | `{question}` → grounded explanation | 200 · 400 bad input · 409 if the workbook is invalid |
 
 Unexpected failures return typed JSON `500 {error, message}`. The UI never shows stale figures after a failed reload.
 
@@ -236,7 +236,7 @@ The DeepSeek path does three things:
 
 ## Limitations and intentional omissions
 
-- **State is in memory** in a single server process, which is enough for one committee session. A restart requires a reload, which the UI does automatically. There is no database by design.
+- **State is in memory**, with no database by design. On serverless hosts such as Vercel, each API route runs in its own short-lived instance. So any route that finds no plan in memory loads the read-only workbook itself and plans it, which gives an identical result. `next.config.ts` bundles the workbook with the API routes (`outputFileTracingIncludes`).
 - **The workbook is read from disk.** There is no upload UI, as the brief allows.
 - **Out of scope per the brief:** authentication, roles, audit trail, persistence, forecasting, multi-day, multi-station or multi-product optimisation, manual allocation editing, scenario simulation, logistics and integrations. None of these are built.
 - **The assistant only supports the three explanation topics.** A free-form chat over arbitrary questions was intentionally not built, to keep the grounding boundary strict.
@@ -248,12 +248,12 @@ The DeepSeek path does three things:
   - `npm test`: 56/56 passing.
   - `npm run typecheck` and `npm run build` succeed with no warnings.
 - **API (production build, curl):**
-  - Before loading, `GET /api/result` returns 404 and `POST /api/plan` returns 409.
+  - A fresh server answers `POST /api/plan`, `GET /api/result` and `POST /api/assistant` with 200 without a prior `POST /api/load`, as happens on serverless hosts.
   - Load returns 200 (20 farms, 10 clients).
   - The plan reproduces every baseline value above, with 7/7 invariants passing.
   - The assistant reports `no_provider` with a deterministic answer citing C02/C09/C08.
   - An off-topic question returns `unsupported`; a malformed body returns 400.
-- **Invalid workbook:** a temp copy with F07 mix = 1.4 and C01 demand = 52 returns 422 with both issues located, the plan is refused with 409, and the UI shows the validation table with no figures.
+- **Invalid workbook:** a temp copy with F07 mix = 1.4 and C01 demand = 52 returns 422 with both issues located, the plan is refused with 422, and the UI shows the validation table with no figures.
 - **Source file unchanged:** the workbook SHA-256 stays `46620fea…bb923cb` before and after all runs.
 - **Visual:** headless Chromium screenshots of every page at 1024 px and 1440 px, in light and dark themes, and of the client drawer.
 - **Interaction (scripted browser, no console errors):**
